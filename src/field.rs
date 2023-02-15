@@ -18,14 +18,14 @@ pub fn from_bytes(bytes: &[u8]) -> u128 {
     return u128::from_le_bytes(bytes.try_into().unwrap());
 }
 
-struct Field {
+pub struct Field {
     M: u128, // Field modulus
     G: u128, // root of unity
     R: Range<u128>,
 }
 
 impl Field {
-    fn new(m: u128, g: u128) -> Field {
+    pub fn new(m: u128, g: u128) -> Field {
         Field {
             M: m,
             G: g,

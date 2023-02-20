@@ -1,11 +1,14 @@
-mod field;
-mod constants;
+// mod constants;
+// mod gmimc;
 
 use std::fmt::Write;
 use std::{mem, slice};
 
-use field::Field;
-use constants::ARK;
+use gmimc_rust_test::constants::ARK;
+use gmimc_rust_test::field::Field;
+
+// use field::Field;
+// use constants::ARK;
 
 pub fn as_bytes<T>(values: &[T]) -> &[u8] {
     let value_size = mem::size_of::<T>();
@@ -42,6 +45,7 @@ impl GMiMC_erf {
               }
           }
       }
+
       state
   }
 

@@ -1,3 +1,4 @@
+// use std::{mem, slice};
 use rand::distributions::{Distribution, Uniform};
 use rand::prelude::*;
 use std::convert::TryInto;
@@ -256,6 +257,15 @@ impl Field {
         return r;
     }
 
+    pub fn exp_cube(&self, x: u128) -> u128 {
+        if x == 0 {
+            return 0;
+        }
+
+        // x^3
+        return self.mul(self.mul(x, x), x);
+    }
+
     /// Computes (0 - x) % m; x is assumed to be a valid field element.
     pub fn neg(&self, x: u128) -> u128 {
         return self.sub(0, x);
@@ -369,10 +379,10 @@ impl Field {
 // ================================================================================================
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use num_bigint::BigUint;
     use std::convert::TryInto;
-
-    use super::Field;
 
     // Field modulus = 2^128 - 45 * 2^40 + 1
     pub const M: u128 = 340282366920938463463374557953744961537;
@@ -380,6 +390,7 @@ mod tests {
     // 2^40 root of unity
     pub const G: u128 = 23953097886125630542083529559205016746;
 
+    // let f91 = Field::new(M, G);
 
     #[test]
     fn add() {
@@ -462,6 +473,17 @@ mod tests {
                 assert_eq!(expected, f128.mul(r1, r2));
             }
         }
+    }
+
+    #[test]
+    fn exp_cube() {
+        let f128 = Field::new(M, G);
+
+        let x: u128 = f128.rand();
+
+        let exp_3 = f128.exp(x, 3u128);
+        let exp_cube = f128.exp_cube(x);
+        assert_eq!(exp_3, exp_cube);
     }
 
     #[test]

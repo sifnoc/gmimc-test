@@ -3,8 +3,23 @@ name = "gmimc-rust-test"
 version = "0.1.0"
 edition = "2021"
 
+# [lib]
+# name = "field"
+# path = "src/field.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bencher = "0.1.5"
 num-bigint = "0.4.3"
 rand = "0.8.5"
+
+[[bench]]
+name = "field_perf"
+harness = false
+path = "benches/field_perf.rs"
+
+[[bench]]
+name = "gmimc_perf"
+harness = false
+path = "benches/gmimc_perf.rs"

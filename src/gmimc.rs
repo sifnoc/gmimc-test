@@ -20,10 +20,10 @@ pub struct GMiMC_erf {
 
 impl GMiMC_erf {
     // output hash function
-    pub fn get_hash_output(&self, value: &[u128]) -> [u128; 6] {
+    pub fn get_hash_output(&self, value: &[u8], result: &mut [u8])  {
         let values = as_bytes(&value);
         let mut state = [0u128; 6];
-        let state_bytes: &mut [u8; 128] = unsafe { &mut *(&state as *const _ as *mut [u8; 128]) };
+        let state_bytes: &mut [u8; 64] = unsafe { &mut *(&state as *const _ as *mut [u8; 64]) };
         state_bytes[..values.len()].copy_from_slice(values);
 
         // TODO: improve performance
@@ -40,7 +40,7 @@ impl GMiMC_erf {
             }
         }
 
-        state
+        result.copy_from_slice(as_bytes(&state[..4]));
     }
 
     pub fn convert_hex_string(input: &[u8]) -> String {
@@ -74,13 +74,15 @@ mod unit {
         };
 
         let value = [1u128, 2, 3, 4];
-        let result = gmimc.get_hash_output(&value);
+        let values = as_bytes(&value);
+        let mut result = [0u8; 32];
+        gmimc.get_hash_output(values, &mut result);
         assert_eq!(
             [
                 115, 208, 64, 41, 162, 43, 134, 243, 236, 80, 161, 106, 195, 234, 30, 26, 71, 74,
                 255, 77, 41, 125, 25, 152, 162, 106, 65, 108, 84, 216, 37, 37
             ],
-            as_bytes(&result[..2])
+            result
         )
     }
 }

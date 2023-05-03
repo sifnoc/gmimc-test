@@ -15,7 +15,7 @@ fn hash_performance(bench: &mut Bencher) {
   let v3 = f128.rand();
   let v4 = f128.rand();
   
-  let g = gmimc::GMiMC_erf {
+  let g = gmimc::gmimc_erf {
     field: f128,
     capacity: 5,
     words: 4,

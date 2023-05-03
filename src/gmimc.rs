@@ -24,7 +24,7 @@ pub struct gmimc_erf<F: PrimeField> {
 impl<F: PrimeField> gmimc_erf<F> {
     // output hash function
     pub fn get_hash_output(&self, value: &[u128]) -> [u128; 6] {
-        
+        // TODO: remove unsafe codes
         let values = as_bytes(&value);
         let mut state = [0u128; 6];
         let state_bytes: &mut [u8; 128] = unsafe { &mut *(&state as *const _ as *mut [u8; 128]) };
@@ -35,26 +35,27 @@ impl<F: PrimeField> gmimc_erf<F> {
             let s0 = state[0];
             let a = F::from_u128(s0);
             let b = F::from_u128(constants::ARK[i as usize]);
-            // let mask = F::cube(&a.add(b));
-            // let mask = F::cube(F::add(s0, constants::ARK[i as usize]));
-            let mask = (a + b)*(a + b)*(a + b);
+            let mask = F::cube(&a.add(b));
+
             for j in 1..512 {
                 // TODO: optimize iteration for performance
                 let masked_state = mask + F::from_u128(state[j]);
-                state[j - 1] = masked_state.to_repr().as_ref()[0] as u128;
-                // println!("state[j]: {:?}, mask: {:?} state[j -1]: {:?}", state[j], mask, state[j - 1]);
+
+                // Remove unsafe way to get bytes from field element
+                for k in 0..16 {
+                    state_bytes[k + ((j - 1) * 16)] = masked_state.to_repr().as_ref()[k]
+                }
                 if j == self.capacity as usize {
                     state[j] = s0;
                     break;
                 }
             }
-            // println!("state: {:?}", state);
         }
 
         state
     }
 
-    pub fn convert_hex_string(input: &[u8]) -> String {
+    pub fn convert_hex_strin<T: std::fmt::LowerHex>(input: &[T]) -> String {
         let mut byte_string = String::new();
         for b in input {
             write!(&mut byte_string, "{:x}", b).expect("Unable to write");
@@ -69,11 +70,7 @@ mod unit {
     // use crate::field;
     use ff::PrimeField;
 
-    use super::as_bytes;
-    use super::gmimc_erf;
-
-    // pub const M: u128 = 340282366920938463463374557953744961537;
-    // pub const G: u128 = 23953097886125630542083529559205016746;
+    use super::{as_bytes, gmimc_erf};
 
     #[test]
     fn default_f128_hash() {
@@ -93,13 +90,15 @@ mod unit {
 
         let value = [1u128, 2, 3, 4];
         let result = gmimc.get_hash_output(&value);
-        println!("result: {:?}", result);
+
+        // mimc hash result test string come from here
+        // https://github.com/GuildOfWeavers/distaff/blob/fad92ce592921e671e72f93cd0078e867350860d/src/crypto/hash.rs#L293-L296
         assert_eq!(
             [
                 115, 208, 64, 41, 162, 43, 134, 243, 236, 80, 161, 106, 195, 234, 30, 26, 71, 74,
                 255, 77, 41, 125, 25, 152, 162, 106, 65, 108, 84, 216, 37, 37
             ],
-            as_bytes(&result[..2])
-        )
+            as_bytes(result.as_ref())[..32]
+        );
     }
 }

@@ -1,12 +1,8 @@
-// mod constants;
-// mod gmimc;
 use ff::PrimeField;
 
-use std::fmt::Write;
-use std::{mem, slice};
+use rand::prelude::random;
 
 use gmimc_rust_test::constants::ARK;
-use gmimc_rust_test::field::Field;
 
 #[derive(PrimeField)]
 #[PrimeFieldModulus = "65537"]
@@ -15,8 +11,8 @@ use gmimc_rust_test::field::Field;
 struct Fp([u64; 1]);
 
 fn main() {
- let f128 = Field::new(340282366920938463463374557953744961537, 23953097886125630542083529559205016746);
- let rand = f128.rand();
- println!("random generated from f128 Field: {}", rand);
- println!("first round constant: {}", ARK[0]);
+    // let mut rng = rand::thread_rng();
+    let rand = Fp::from_u128(random::<u128>());
+    println!("random generated from f128 Field: {:?}", rand);
+    println!("first round constant: {}", ARK[0]);
 }

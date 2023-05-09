@@ -18,7 +18,7 @@ pub struct gmimc_erf<F: PrimeField, const N: usize = 4> {
     pub capacity: u8,
     pub words: u8,
     pub round: u16,
-    _field: std::marker::PhantomData<F>,
+    pub _field: std::marker::PhantomData<F>,
 }
 
 impl<F: PrimeField, const N: usize> gmimc_erf<F, N> {

@@ -12,11 +12,6 @@ num-bigint = "0.4.3"
 rand = "0.8.5"
 
 [[bench]]
-name = "field_perf"
-harness = false
-path = "benches/field_perf.rs"
-
-[[bench]]
 name = "gmimc_perf"
 harness = false
 path = "benches/gmimc_perf.rs"

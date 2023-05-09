@@ -14,19 +14,19 @@ pub fn as_bytes<T>(values: &[T]) -> &[u8] {
 
 // GMiMC with expanding rouding function(ERF)
 #[warn(unused_allocation)]
-pub struct gmimc_erf<F: PrimeField> {
+pub struct gmimc_erf<F: PrimeField, const N: usize = 4> {
     pub capacity: u8,
     pub words: u8,
     pub round: u16,
     _field: std::marker::PhantomData<F>,
 }
 
-impl<F: PrimeField> gmimc_erf<F> {
+impl<F: PrimeField, const N: usize> gmimc_erf<F, N> {
     // output hash function
-    pub fn get_hash_output(&self, value: &[u128]) -> [u128; 6] {
+    pub fn get_hash_output(&self, value: &[u128]) -> [u128; N] {
         // TODO: remove unsafe codes
         let values = as_bytes(&value);
-        let mut state = [0u128; 6];
+        let mut state = [0u128; N]; // number of branches for mutation
         let state_bytes: &mut [u8; 128] = unsafe { &mut *(&state as *const _ as *mut [u8; 128]) };
         state_bytes[..values.len()].copy_from_slice(values);
 
@@ -37,18 +37,17 @@ impl<F: PrimeField> gmimc_erf<F> {
             let b = F::from_u128(constants::ARK[i as usize]);
             let mask = F::cube(&a.add(b));
 
-            for j in 1..512 {
+            for j in 1..self.capacity as usize + 1 {
                 // TODO: optimize iteration for performance
                 let masked_state = mask + F::from_u128(state[j]);
 
                 // Remove unsafe way to get bytes from field element
-                for k in 0..16 {
+                let upper_bound = (self.words * 4u8) as usize;
+                for k in 0..upper_bound {
                     state_bytes[k + ((j - 1) * 16)] = masked_state.to_repr().as_ref()[k]
                 }
-                if j == self.capacity as usize {
-                    state[j] = s0;
-                    break;
-                }
+
+                state[j] = s0;
             }
         }
 
@@ -64,7 +63,6 @@ impl<F: PrimeField> gmimc_erf<F> {
     }
 }
 
-// Testing
 #[cfg(test)]
 mod unit {
     // use crate::field;
@@ -74,14 +72,13 @@ mod unit {
 
     #[test]
     fn default_f128_hash() {
-        // let f128 = field::Field::new(M, G);
         #[derive(PrimeField)]
         #[PrimeFieldModulus = "340282366920938463463374557953744961537"]
         #[PrimeFieldGenerator = "23953097886125630542083529559205016746"]
         #[PrimeFieldReprEndianness = "little"]
         struct F([u64; 3]);
 
-        let gmimc = gmimc_erf::<F> {
+        let gmimc = gmimc_erf::<F, 6> {
             capacity: 5,
             words: 4,
             round: 166,
@@ -100,5 +97,27 @@ mod unit {
             ],
             as_bytes(result.as_ref())[..32]
         );
+    }
+
+    #[test]
+    fn low_prime_field() {
+        #[derive(PrimeField)]
+        #[PrimeFieldModulus = "27"]
+        #[PrimeFieldGenerator = "2"]
+        #[PrimeFieldReprEndianness = "little"]
+        struct F([u64; 1]);
+
+        let gmimc = gmimc_erf::<F> {
+            capacity: 1,
+            words: 2,
+            round: 121,
+            _field: std::marker::PhantomData::<F>,
+        };
+
+        // let value = [0, 0, 0, 1u128];
+        let value = [0, 0, 0, 1u128];
+        let result = gmimc.get_hash_output(&value);
+
+        assert_eq!([8, 7, 0, 1], result);
     }
 }

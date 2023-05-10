@@ -9,6 +9,7 @@ edition = "2021"
 bencher = "0.1.5"
 ff = { version = "0.13", features = ["derive"] }
 num-bigint = "0.4.3"
+plotters = "0.3.4"
 rand = "0.8.5"
 
 [[bench]]

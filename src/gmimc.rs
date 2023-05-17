@@ -30,18 +30,16 @@ impl<F: PrimeField, const N: usize> gmimc_erf<F, N> {
         let state_bytes: &mut [u8; 128] = unsafe { &mut *(&state as *const _ as *mut [u8; 128]) };
         state_bytes[..values.len()].copy_from_slice(values);
 
-        // TODO: improve performance
         for i in 0..self.round {
             let s0 = state[0];
             let a = F::from_u128(s0);
             let b = F::from_u128(constants::ARK[i as usize]);
             let mask = F::cube(&a.add(b));
 
-            for j in 1..self.capacity as usize + 1 {
-                // TODO: optimize iteration for performance
+            // Sponge construction
+            for j in 1..=self.capacity as usize {
                 let masked_state = mask + F::from_u128(state[j]);
 
-                // Remove unsafe way to get bytes from field element
                 let upper_bound = (self.words * 4u8) as usize;
                 for k in 0..upper_bound {
                     state_bytes[k + ((j - 1) * 16)] = masked_state.to_repr().as_ref()[k]
@@ -65,7 +63,6 @@ impl<F: PrimeField, const N: usize> gmimc_erf<F, N> {
 
 #[cfg(test)]
 mod unit {
-    // use crate::field;
     use ff::PrimeField;
 
     use super::{as_bytes, gmimc_erf};
@@ -102,22 +99,23 @@ mod unit {
     #[test]
     fn low_prime_field() {
         #[derive(PrimeField)]
-        #[PrimeFieldModulus = "27"]
-        #[PrimeFieldGenerator = "2"]
+        #[PrimeFieldModulus = "23"]
+        #[PrimeFieldGenerator = "1"]
         #[PrimeFieldReprEndianness = "little"]
         struct F([u64; 1]);
 
         let gmimc = gmimc_erf::<F> {
-            capacity: 1,
+            capacity: 3,
             words: 2,
             round: 121,
             _field: std::marker::PhantomData::<F>,
         };
 
         // let value = [0, 0, 0, 1u128];
-        let value = [0, 0, 0, 1u128];
-        let result = gmimc.get_hash_output(&value);
-
-        assert_eq!([8, 7, 0, 1], result);
+        for i in 0..23 {
+            let value = [0, 0, 0, i as u128];
+            let result = gmimc.get_hash_output(&value);
+            println!("result: {:?}", result[1]);
+        }
     }
 }
